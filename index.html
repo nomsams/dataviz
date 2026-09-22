@@ -3,24 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Advanced Vis (Robust Edition)</title>
+    <title>Nexus Data Vis</title>
     
+    <!-- Reliable CDNs -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 
     <style>
         :root {
             --bg-color: #000000;
-            --panel-bg: rgba(28, 28, 30, 0.7);
-            --panel-border: rgba(255, 255, 255, 0.1);
+            --panel-bg: rgba(44, 44, 46, 0.7);
+            --panel-border: rgba(255, 255, 255, 0.15);
             --text-primary: #f5f5f7;
             --text-secondary: #86868b;
             --accent-blue: #0a84ff;
             --accent-blue-hover: #0071e3;
             --danger: #ff453a;
-            --radius-lg: 14px;
-            --radius-md: 8px;
-            --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
@@ -38,90 +39,106 @@
 
         .glass {
             background: var(--panel-bg);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             border: 1px solid var(--panel-border);
         }
 
-        /* Layout */
-        #sidebar-left { width: 320px; min-width: 320px; display: flex; flex-direction: column; border-right: 1px solid var(--panel-border); z-index: 10; }
+        /* Layout Structure */
+        #sidebar-left { width: 340px; min-width: 340px; display: flex; flex-direction: column; border-right: 1px solid var(--panel-border); z-index: 10; }
         #main-area { flex: 1; display: flex; flex-direction: column; position: relative; }
         #sidebar-right { width: 350px; min-width: 350px; display: flex; flex-direction: column; border-left: 1px solid var(--panel-border); z-index: 10; }
 
-        .scrollable { flex: 1; overflow-y: auto; padding: 20px; }
+        .scrollable { flex: 1; overflow-y: auto; padding: 24px; }
         .scrollable::-webkit-scrollbar { width: 6px; }
         .scrollable::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
 
-        /* Typography & Upload */
-        h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
-        p.subtitle { font-size: 12px; color: var(--text-secondary); margin-bottom: 20px; }
+        /* Typography & Upload Zone */
+        h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.5px; }
+        p.subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; }
 
         #upload-zone {
-            border: 1.5px dashed var(--panel-border); border-radius: var(--radius-lg);
-            padding: 24px; text-align: center; cursor: pointer; transition: var(--transition);
-            margin-bottom: 20px; background: rgba(255,255,255,0.02);
+            border: 2px dashed rgba(255,255,255,0.2); border-radius: var(--radius-lg);
+            padding: 30px 20px; text-align: center; cursor: pointer; transition: var(--transition);
+            margin-bottom: 24px; background: rgba(255,255,255,0.03);
         }
-        #upload-zone:hover { border-color: var(--accent-blue); background: rgba(10, 132, 255, 0.05); }
+        #upload-zone:hover, #upload-zone.dragover { border-color: var(--accent-blue); background: rgba(10, 132, 255, 0.08); }
         #file-input { display: none; }
 
-        .control-group { margin-bottom: 16px; }
-        label.control-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }
+        /* Controls */
+        .control-group { margin-bottom: 20px; }
+        label.control-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.6px; }
         
         select, input[type="text"], input[type="number"] {
-            width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--panel-border);
+            width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--panel-border);
             border-radius: var(--radius-md); color: var(--text-primary); font-size: 13px;
-            padding: 10px 12px; outline: none; font-family: inherit; transition: var(--transition);
+            padding: 12px 14px; outline: none; font-family: inherit; transition: var(--transition);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
         }
-        select:focus, input:focus { border-color: var(--accent-blue); }
-        select { appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill="%2386868b" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat: no-repeat; background-position-x: 98%; background-position-y: 50%; }
+        select:focus, input:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.3); }
+        select { appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill="%2386868b" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat: no-repeat; background-position-x: 96%; background-position-y: 50%; }
 
-        .search-wrap { position: relative; margin-bottom: 20px; }
-        .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); fill: var(--text-secondary); width: 16px; height: 16px; }
-        .search-wrap input { padding-left: 34px; }
+        .search-wrap { position: relative; margin-bottom: 24px; }
+        .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); fill: var(--text-secondary); width: 16px; height: 16px; }
+        .search-wrap input { padding-left: 36px; border-radius: 20px; }
 
-        .axis-toggles { display: flex; gap: 8px; margin-bottom: 20px; }
-        .btn-toggle { flex: 1; padding: 8px; border-radius: var(--radius-md); border: 1px solid var(--panel-border); background: rgba(0,0,0,0.3); color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; transition: var(--transition); }
-        .btn-toggle.active { background: rgba(10, 132, 255, 0.15); border-color: var(--accent-blue); color: var(--accent-blue); }
+        /* iOS Switches & Toggles */
+        .axis-toggles { display: flex; gap: 8px; margin-bottom: 24px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 12px; }
+        .btn-toggle { flex: 1; padding: 10px; border-radius: 8px; border: none; background: transparent; color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .btn-toggle.active { background: var(--panel-border); color: var(--text-primary); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
-        .ios-switch { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 13px; }
-        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
+        .ios-switch { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 13px; font-weight: 500; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #39393d; transition: .3s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; }
-        input:checked + .slider { background-color: #30d158; }
-        input:checked + .slider:before { transform: translateX(14px); }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #39393d; transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: #32d74b; }
+        input:checked + .slider:before { transform: translateX(16px); }
 
-        .range-wrap { display: flex; gap: 8px; align-items: center; }
-        .range-wrap input { width: 45%; }
-        .range-wrap span { font-size: 12px; color: var(--text-secondary); }
+        /* Filter Ranges */
+        .range-wrap { display: flex; gap: 10px; align-items: center; }
+        .range-wrap input { width: 45%; text-align: center; }
+        .range-wrap span { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
 
-        .tabs { display: flex; border-bottom: 1px solid var(--panel-border); background: rgba(0,0,0,0.2); }
-        .tab { flex: 1; text-align: center; padding: 12px; font-size: 13px; font-weight: 600; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; transition: var(--transition); }
+        /* Tabs */
+        .tabs { display: flex; border-bottom: 1px solid var(--panel-border); background: rgba(0,0,0,0.3); padding: 0 8px; }
+        .tab { padding: 16px 12px; font-size: 13px; font-weight: 600; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; transition: var(--transition); margin-right: 16px; }
+        .tab:hover { color: var(--text-primary); }
         .tab.active { color: var(--text-primary); border-bottom-color: var(--accent-blue); }
 
-        .tab-content { display: none; flex: 1; position: relative; }
+        .tab-content { display: none; flex: 1; position: relative; height: 100%; }
         .tab-content.active { display: flex; flex-direction: column; }
         
         .plot-container { flex: 1; width: 100%; height: 100%; }
-        .empty-state { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); }
-
-        .btn-primary { width: 100%; padding: 10px; border-radius: var(--radius-md); border: none; background: var(--accent-blue); color: white; font-weight: 600; font-size: 13px; cursor: pointer; transition: var(--transition); margin-top: 10px; }
-        .btn-primary:hover { background: var(--accent-blue-hover); }
-        .btn-danger { background: rgba(255, 69, 58, 0.15); color: var(--danger); }
-        .btn-danger:hover { background: rgba(255, 69, 58, 0.25); }
-
-        /* Detail & Compare List */
-        .detail-item { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .detail-item .lbl { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; }
-        .detail-item .val { font-size: 13px; font-weight: 500; word-break: break-word; margin-top: 2px; }
-
-        .compare-table-wrap { overflow-x: auto; overflow-y: auto; height: 100%; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid var(--panel-border); }
-        th { color: var(--text-secondary); font-weight: 600; position: sticky; left: 0; background: var(--bg-color); z-index: 1; border-right: 1px solid var(--panel-border); }
         
-        #app-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s; pointer-events: none; }
-        .loader { width: 30px; height: 30px; border: 3px solid var(--panel-border); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 1s linear infinite; }
+        /* Empty State */
+        .empty-state { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); text-align: center; padding: 40px; }
+        .empty-state svg { width: 64px; height: 64px; fill: rgba(255,255,255,0.1); margin-bottom: 16px; }
+        .empty-state h3 { color: var(--text-primary); font-size: 18px; margin-bottom: 8px; font-weight: 600; }
+        
+        /* Error Message Box */
+        #error-msg { display: none; background: rgba(255,69,58,0.15); border: 1px solid rgba(255,69,58,0.3); color: #ff6961; padding: 12px; border-radius: var(--radius-md); margin-bottom: 20px; font-size: 12px; font-weight: 500; }
+
+        /* Buttons & Detail List */
+        .btn-primary { width: 100%; padding: 12px; border-radius: var(--radius-md); border: none; background: var(--accent-blue); color: white; font-weight: 600; font-size: 14px; cursor: pointer; transition: var(--transition); margin-top: 10px; }
+        .btn-primary:hover { background: var(--accent-blue-hover); transform: translateY(-1px); }
+        .btn-danger { background: rgba(255, 69, 58, 0.2); color: #ff6961; }
+        .btn-danger:hover { background: rgba(255, 69, 58, 0.3); }
+
+        .detail-item { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .detail-item:last-child { border-bottom: none; }
+        .detail-item .lbl { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .detail-item .val { font-size: 14px; font-weight: 500; word-break: break-word; color: var(--text-primary); }
+
+        .compare-table-wrap { overflow: auto; height: 100%; border-radius: var(--radius-md); border: 1px solid var(--panel-border); background: rgba(0,0,0,0.2); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--panel-border); }
+        th { color: var(--text-secondary); font-weight: 600; position: sticky; top: 0; left: 0; background: #1c1c1e; z-index: 2; border-right: 1px solid var(--panel-border); text-transform: capitalize; }
+        td { background: rgba(255,255,255,0.02); }
+        
+        /* Fullscreen Overlay Loader */
+        #app-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s ease; }
+        .loader { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 1s cubic-bezier(0.55, 0.085, 0.68, 0.53) infinite; margin-bottom: 16px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -130,25 +147,28 @@
     <aside id="sidebar-left" class="glass">
         <div class="scrollable">
             <h1>Nexus Vis</h1>
-            <p class="subtitle">Robust Data Explorer</p>
+            <p class="subtitle">Advanced Data Explorer</p>
+            
+            <div id="error-msg"></div>
 
             <div id="upload-zone">
-                <svg viewBox="0 0 24 24" style="width:28px; height:28px; fill:var(--text-secondary); margin-bottom:8px;"><path d="M19 13v5c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2v-5H3.5c-.9 0-1.2-.6-.5-1.2l8-8.5c.5-.6 1.4-.6 1.9 0l8 8.5c.7.6.4 1.2-.5 1.2H19zM12 4.5l-6 6.4h4v7.1h4v-7.1h4l-6-6.4z"/></svg>
-                <div id="upload-txt">Upload CSV Data</div>
+                <svg viewBox="0 0 24 24" style="width:36px; height:36px; fill:var(--text-secondary); margin-bottom:12px;"><path d="M19 13v5c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2v-5H3.5c-.9 0-1.2-.6-.5-1.2l8-8.5c.5-.6 1.4-.6 1.9 0l8 8.5c.7.6.4 1.2-.5 1.2H19zM12 4.5l-6 6.4h4v7.1h4v-7.1h4l-6-6.4z"/></svg>
+                <div id="upload-txt" style="font-weight:600; margin-bottom:4px;">Upload CSV Data</div>
+                <div style="font-size:12px; color:var(--text-secondary);">Drag & drop or click to browse</div>
                 <input type="file" id="file-input" accept=".csv">
             </div>
 
             <div id="controls" style="display: none;">
                 <div class="search-wrap">
                     <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                    <input type="text" id="search-input" placeholder="Search rows...">
+                    <input type="text" id="search-input" placeholder="Search entities...">
                 </div>
 
-                <label class="control-label">Active Axes</label>
+                <label class="control-label">Active Dimensionality</label>
                 <div class="axis-toggles">
-                    <button class="btn-toggle active" data-axis="x">X</button>
-                    <button class="btn-toggle active" data-axis="y">Y</button>
-                    <button class="btn-toggle active" data-axis="z">Z</button>
+                    <button class="btn-toggle active" data-axis="x">X Axis</button>
+                    <button class="btn-toggle active" data-axis="y">Y Axis</button>
+                    <button class="btn-toggle active" data-axis="z">Z Axis</button>
                 </div>
 
                 <div class="control-group" id="wrap-x">
@@ -160,7 +180,7 @@
                     <select id="sel-y"></select>
                 </div>
                 <div class="control-group" id="wrap-z">
-                    <label class="control-label">Z Axis Mapping</label>
+                    <label class="control-label">Z Axis (Depth / Color)</label>
                     <select id="sel-z"></select>
                 </div>
                 <div class="control-group">
@@ -169,12 +189,12 @@
                 </div>
 
                 <div class="ios-switch">
-                    <span>Show Missing Data</span>
-                    <label class="switch"><input type="checkbox" id="toggle-missing"><span class="slider"></span></label>
+                    <span>Fade Missing Data</span>
+                    <label class="switch"><input type="checkbox" id="toggle-missing" checked><span class="slider"></span></label>
                 </div>
 
                 <div id="filters-container">
-                    <label class="control-label" style="margin-top:20px; border-top: 1px solid var(--panel-border); padding-top:16px;">Numeric Range Filters</label>
+                    <label class="control-label" style="margin-top:30px; border-top: 1px solid var(--panel-border); padding-top:20px;">Global Range Filters</label>
                     <div id="filters-list"></div>
                 </div>
             </div>
@@ -184,40 +204,44 @@
     <main id="main-area">
         <div class="tabs">
             <div class="tab active" data-target="view-plot">Multidimensional Plot</div>
-            <div class="tab" data-target="view-hist">Distribution Histogram</div>
         </div>
         
         <div id="view-plot" class="tab-content active">
             <div class="empty-state" id="empty-state-main">
-                <svg viewBox="0 0 24 24" style="width:48px; height:48px; fill:var(--panel-border); margin-bottom:12px;"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
-                <p>Upload data to visualize</p>
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+                <h3>No Data Visualized</h3>
+                <p>Upload a CSV file to begin exploring data.</p>
             </div>
             <div id="plot-div" class="plot-container"></div>
-        </div>
-
-        <div id="view-hist" class="tab-content">
-            <div id="hist-div" class="plot-container"></div>
         </div>
     </main>
 
     <aside id="sidebar-right" class="glass">
         <div class="tabs">
-            <div class="tab active" data-target="view-inspect">Data Inspector</div>
+            <div class="tab active" data-target="view-inspect">Inspector</div>
             <div class="tab" data-target="view-compare" id="tab-compare">Compare (0)</div>
         </div>
 
         <div id="view-inspect" class="tab-content active scrollable">
-            <div id="inspect-content" style="color:var(--text-secondary); text-align:center; margin-top:50px;">Click a data point in the plot to inspect.</div>
+            <div id="inspect-content" style="color:var(--text-secondary); text-align:center; margin-top:60px;">
+                <svg viewBox="0 0 24 24" style="width:40px; height:40px; fill:rgba(255,255,255,0.1); margin-bottom:12px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <p>Hover or click a data point in the plot to inspect all columns.</p>
+            </div>
             <button id="btn-add-compare" class="btn-primary" style="display:none; margin-top:20px;">Add to Comparison</button>
         </div>
 
         <div id="view-compare" class="tab-content scrollable">
-            <div id="compare-content" style="color:var(--text-secondary); text-align:center; margin-top:50px;">No items selected for comparison.</div>
+            <div id="compare-content" style="color:var(--text-secondary); text-align:center; margin-top:60px;">
+                <p>No items selected.</p>
+            </div>
             <button id="btn-clear-compare" class="btn-primary btn-danger" style="display:none; margin-top:20px;">Clear Comparison</button>
         </div>
     </aside>
 
-    <div id="app-overlay"><div class="loader"></div></div>
+    <div id="app-overlay">
+        <div class="loader"></div>
+        <div id="loader-text" style="color:var(--text-secondary); font-size:14px; font-weight:500;">Initializing System...</div>
+    </div>
 
     <script>
         const AppState = {
@@ -225,176 +249,182 @@
             cleaned: [],
             filtered: [],
             columns: [],
-            colMeta: {}, // { name: { type: 'numeric'|'string', min, max, unique } }
-            
+            colMeta: {}, 
             axes: { x: true, y: true, z: true },
             maps: { x: '', y: '', z: '', size: '' },
-            filters: {}, // { col: {min, max} }
+            filters: {}, 
             search: '',
-            showMissing: false,
-            
+            fadeMissing: true, // true: dim them, false: remove them entirely
             inspectedRow: null,
             compareList: []
         };
 
         const DOM = {
             overlay: document.getElementById('app-overlay'),
+            loaderText: document.getElementById('loader-text'),
+            errorMsg: document.getElementById('error-msg'),
             uploadZone: document.getElementById('upload-zone'),
             fileInput: document.getElementById('file-input'),
-            uploadTxt: document.getElementById('upload-txt'),
             controls: document.getElementById('controls'),
-            
-            selX: document.getElementById('sel-x'),
-            selY: document.getElementById('sel-y'),
-            selZ: document.getElementById('sel-z'),
-            selSize: document.getElementById('sel-size'),
+            selX: document.getElementById('sel-x'), selY: document.getElementById('sel-y'),
+            selZ: document.getElementById('sel-z'), selSize: document.getElementById('sel-size'),
             axisBtns: document.querySelectorAll('.btn-toggle'),
-            wrapX: document.getElementById('wrap-x'),
-            wrapY: document.getElementById('wrap-y'),
-            wrapZ: document.getElementById('wrap-z'),
-            
-            searchInput: document.getElementById('search-input'),
-            toggleMissing: document.getElementById('toggle-missing'),
-            filtersList: document.getElementById('filters-list'),
-            
-            plotDiv: document.getElementById('plot-div'),
-            histDiv: document.getElementById('hist-div'),
-            emptyState: document.getElementById('empty-state-main'),
-            
-            tabs: document.querySelectorAll('.tab'),
-            tabContents: document.querySelectorAll('.tab-content'),
-            
-            inspectContent: document.getElementById('inspect-content'),
-            btnAddCompare: document.getElementById('btn-add-compare'),
-            
-            compareContent: document.getElementById('compare-content'),
-            tabCompare: document.getElementById('tab-compare'),
-            btnClearCompare: document.getElementById('btn-clear-compare')
+            wrapX: document.getElementById('wrap-x'), wrapY: document.getElementById('wrap-y'), wrapZ: document.getElementById('wrap-z'),
+            searchInput: document.getElementById('search-input'), toggleMissing: document.getElementById('toggle-missing'),
+            filtersList: document.getElementById('filters-list'), plotDiv: document.getElementById('plot-div'),
+            emptyState: document.getElementById('empty-state-main'), tabs: document.querySelectorAll('.tab'),
+            inspectContent: document.getElementById('inspect-content'), btnAddCompare: document.getElementById('btn-add-compare'),
+            compareContent: document.getElementById('compare-content'), tabCompare: document.getElementById('tab-compare'), btnClearCompare: document.getElementById('btn-clear-compare')
         };
 
-        // --- Core UI Events ---
-        DOM.tabs.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                const targetId = e.target.getAttribute('data-target');
-                // Handle scope (Main vs Sidebar tabs)
-                const siblings = Array.from(e.target.parentElement.children);
-                siblings.forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active');
-                
-                const contentSiblings = Array.from(document.getElementById(targetId).parentElement.children).filter(c => c.classList.contains('tab-content'));
-                contentSiblings.forEach(c => c.classList.remove('active'));
-                document.getElementById(targetId).classList.add('active');
-                
-                // Relayout Plotly if container becomes visible
-                if(targetId === 'view-plot' && AppState.cleaned.length) Plotly.relayout(DOM.plotDiv, {autosize: true});
-                if(targetId === 'view-hist' && AppState.cleaned.length) renderHistogram();
-            });
-        });
+        function showError(msg) {
+            console.error(msg);
+            DOM.errorMsg.style.display = 'block';
+            DOM.errorMsg.textContent = msg;
+            setTimeout(() => { DOM.errorMsg.style.display = 'none'; }, 5000);
+        }
 
+        async function initApp() {
+            try {
+                DOM.loaderText.textContent = "Checking for default data...";
+                // Try fetching the default CSV. Wrap in strict try/catch to prevent infinite loaders.
+                const response = await fetch('countries_demographics_enriched.csv');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const csvText = await response.text();
+                if (!csvText || csvText.trim() === '') throw new Error("Empty CSV file fetched.");
+                
+                DOM.loaderText.textContent = "Parsing default data...";
+                parseCSVString(csvText);
+            } catch (error) {
+                console.warn("Default CSV not found or accessible (CORS/404). Transitioning to manual upload state.", error);
+                // Gracefully hide overlay and allow user to upload
+                DOM.overlay.style.opacity = '0';
+                setTimeout(() => { DOM.overlay.style.display = 'none'; }, 400);
+            }
+        }
+
+        // Call init App on load
+        window.addEventListener('load', initApp);
+
+        // --- STREAMING_CHUNK:File Upload and Aggressive Cleaning Logic ---
         DOM.uploadZone.addEventListener('click', () => DOM.fileInput.click());
-        DOM.uploadZone.addEventListener('dragover', e => { e.preventDefault(); DOM.uploadZone.style.borderColor = 'var(--accent-blue)'; });
-        DOM.uploadZone.addEventListener('dragleave', e => { e.preventDefault(); DOM.uploadZone.style.borderColor = ''; });
+        DOM.uploadZone.addEventListener('dragover', e => { e.preventDefault(); DOM.uploadZone.classList.add('dragover'); });
+        DOM.uploadZone.addEventListener('dragleave', e => { e.preventDefault(); DOM.uploadZone.classList.remove('dragover'); });
         DOM.uploadZone.addEventListener('drop', e => {
-            e.preventDefault(); DOM.uploadZone.style.borderColor = '';
+            e.preventDefault(); DOM.uploadZone.classList.remove('dragover');
             if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
         });
         DOM.fileInput.addEventListener('change', e => {
             if (e.target.files.length) handleFile(e.target.files[0]);
         });
 
-        // --- STREAMING_CHUNK:Implementing Aggressive Data Parser ---
         function handleFile(file) {
-            if (!file.name.toLowerCase().endsWith('.csv')) { alert('Please upload a .csv file'); return; }
-            DOM.uploadTxt.textContent = "Parsing Data...";
+            if (!file.name.toLowerCase().endsWith('.csv')) { showError('Please upload a valid .csv file'); return; }
+            DOM.overlay.style.display = 'flex';
+            DOM.overlay.style.opacity = '1';
+            DOM.loaderText.textContent = "Processing Upload...";
             
-            // Note: dynamicTyping is FALSE. We clean manually to prevent crashes.
-            Papa.parse(file, {
-                header: true, skipEmptyLines: true, dynamicTyping: false,
-                complete: function(results) {
-                    DOM.uploadTxt.textContent = "Upload CSV Data";
-                    if (results.errors.length > 0 && results.data.length === 0) {
-                        alert("Error parsing CSV data."); return;
-                    }
-                    processRawData(results.data, results.meta.fields);
-                }
-            });
+            const reader = new FileReader();
+            reader.onload = (e) => parseCSVString(e.target.result);
+            reader.onerror = () => { showError("Failed to read file."); hideLoader(); };
+            reader.readAsText(file);
         }
 
-        function aggressiveNumClean(val) {
+        function parseCSVString(csvText) {
+            try {
+                Papa.parse(csvText, {
+                    header: true, skipEmptyLines: true, dynamicTyping: false,
+                    complete: function(results) {
+                        if (results.errors.length > 0 && results.data.length === 0) {
+                            throw new Error("CSV Parsing failed: " + results.errors[0].message);
+                        }
+                        processRawData(results.data, results.meta.fields);
+                    }
+                });
+            } catch (err) {
+                showError(err.message);
+                hideLoader();
+            }
+        }
+
+        function hideLoader() {
+            DOM.overlay.style.opacity = '0';
+            setTimeout(() => { DOM.overlay.style.display = 'none'; }, 400);
+        }
+
+        // Aggressively cleans numbers so Plotly won't crash on commas, spaces, or currency symbols.
+        // Extracts primary language if column seems to be a language list.
+        function aggressiveClean(val, colName) {
             if (val === null || val === undefined || val === '') return null;
             let str = String(val).trim();
-            // Remove typical formatting chars: commas, currencies, spaces
+            if (str === '') return null;
+
+            // Specific prompt logic: Extract primary language from 'official_languages_top3_with_pct'
+            if (colName && colName.toLowerCase().includes('language')) {
+                // Takes "Afghan Persian or Dari 77%; Pashto 48%" -> "Afghan Persian or Dari"
+                let primary = str.split(';')[0];
+                // Remove trailing percentages and numbers to group them cleanly
+                primary = primary.replace(/[0-9.%]/g, '').trim();
+                return primary;
+            }
+
+            // Standard numeric cleaning
             let cleanedStr = str.replace(/[$,€£\s]/g, '');
             let num = Number(cleanedStr);
             if (!isNaN(num) && cleanedStr !== '') return num;
+            
             return str;
         }
 
         function processRawData(data, fields) {
-            DOM.overlay.style.opacity = '1';
-            
-            // Clean headers (remove empty)
             AppState.columns = fields.filter(f => f && f.trim() !== '');
-            AppState.raw = data;
             
             let processedData = [];
-            
-            // Step 1: Aggressive Cleaning Map
             data.forEach((row, index) => {
-                let newRow = { _id: index }; // inject unique ID
+                let newRow = { _id: index };
                 AppState.columns.forEach(col => {
-                    newRow[col] = aggressiveNumClean(row[col]);
+                    newRow[col] = aggressiveClean(row[col], col);
                 });
                 processedData.push(newRow);
             });
 
-            // Step 2: Type Inference & Profiling
+            // Infer column types
             AppState.colMeta = {};
             AppState.columns.forEach(col => {
-                let values = processedData.map(r => r[col]).filter(v => v !== null && v !== '');
+                let values = processedData.map(r => r[col]).filter(v => v !== null);
                 let numCount = values.filter(v => typeof v === 'number').length;
                 
-                // If > 60% of valid fields are numbers, force numeric col
+                // If majority are numbers, enforce numeric strictly
                 if (values.length > 0 && (numCount / values.length) > 0.6) {
                     let nums = values.map(Number).filter(n => !isNaN(n));
                     AppState.colMeta[col] = {
-                        type: 'numeric',
-                        min: Math.min(...nums),
-                        max: Math.max(...nums)
+                        type: 'numeric', min: Math.min(...nums), max: Math.max(...nums)
                     };
-                    // Force convert mixed items to null if they aren't numbers
-                    processedData.forEach(r => {
-                        if(r[col] !== null && typeof r[col] !== 'number') r[col] = null; 
-                    });
+                    processedData.forEach(r => { if(r[col] !== null && typeof r[col] !== 'number') r[col] = null; });
                 } else {
-                    AppState.colMeta[col] = {
-                        type: 'string',
-                        unique: [...new Set(values)]
-                    };
+                    AppState.colMeta[col] = { type: 'string', unique: [...new Set(values)] };
                 }
             });
 
             AppState.cleaned = processedData;
             initializeUI();
-            
-            setTimeout(() => { DOM.overlay.style.opacity = '0'; }, 300);
+            hideLoader();
         }
 
-        // --- STREAMING_CHUNK:Populating Controls and Applying Filters ---
+        // --- STREAMING_CHUNK:Building UI and Defaults ---
         function initializeUI() {
             DOM.controls.style.display = 'block';
             DOM.emptyState.style.display = 'none';
 
             let numCols = AppState.columns.filter(c => AppState.colMeta[c].type === 'numeric');
             let strCols = AppState.columns.filter(c => AppState.colMeta[c].type === 'string');
-            let allCols = [...numCols, ...strCols];
 
             const populate = (sel, primary, secondary) => {
-                sel.innerHTML = '';
+                sel.innerHTML = '<option value="">None</option>';
                 [...primary, ...secondary].forEach(c => {
                     let opt = document.createElement('option');
-                    opt.value = c;
-                    opt.textContent = `${c} ${AppState.colMeta[c].type === 'numeric' ? '(123)' : '(ABC)'}`;
+                    opt.value = c; opt.textContent = `${c} ${AppState.colMeta[c].type === 'numeric' ? '(Num)' : '(Txt)'}`;
                     sel.appendChild(opt);
                 });
             };
@@ -402,27 +432,21 @@
             populate(DOM.selX, numCols, strCols);
             populate(DOM.selY, numCols, strCols);
             populate(DOM.selZ, strCols, numCols);
-            
-            DOM.selSize.innerHTML = '<option value="">Uniform Size</option>';
-            numCols.forEach(c => { let o=document.createElement('option'); o.value=c; o.textContent=c; DOM.selSize.appendChild(o); });
+            populate(DOM.selSize, numCols, []);
 
-            // Set specific requested defaults if they exist
+            // Apply Requested Defaults
             const applyDefault = (selId, targetNames) => {
                 let sel = document.getElementById(selId);
                 let found = targetNames.find(n => AppState.columns.includes(n));
-                if(found) sel.value = found;
-                else if(sel.options.length > 0) sel.selectedIndex = Math.min(sel.options.length -1, selId === 'sel-y' ? 1 : 0);
-                AppState.maps[selId.replace('sel-', '')] = sel.value;
+                if(found) { sel.value = found; AppState.maps[selId.replace('sel-', '')] = found; }
             };
 
+            applyDefault('sel-size', ['population']);
+            applyDefault('sel-z', ['official_languages_top3_with_pct', 'primary_language', 'region_simplified']);
             applyDefault('sel-x', ['average_monthly_salary', 'salary', 'GDP']);
             applyDefault('sel-y', ['literacy_rate', 'life_expectancy_male']);
-            applyDefault('sel-z', ['official_languages_top3_with_pct', 'primary_language', 'region_simplified']);
-            
-            let popMatch = numCols.find(c => c.toLowerCase().includes('population'));
-            if(popMatch) { DOM.selSize.value = popMatch; AppState.maps.size = popMatch; }
 
-            // Build Range Filters
+            // Build Global Range Filters
             DOM.filtersList.innerHTML = '';
             AppState.filters = {};
             numCols.forEach(c => {
@@ -432,7 +456,7 @@
                 let div = document.createElement('div');
                 div.className = 'control-group';
                 div.innerHTML = `
-                    <label class="control-label" style="text-transform:none; margin-bottom:4px;">${c}</label>
+                    <label class="control-label" style="text-transform:none; margin-bottom:4px; font-size:10px;">${c}</label>
                     <div class="range-wrap">
                         <input type="number" data-col="${c}" data-type="min" value="${meta.min}" step="any">
                         <span>-</span>
@@ -442,140 +466,129 @@
                 DOM.filtersList.appendChild(div);
             });
 
-            // Bind filter inputs
             DOM.filtersList.querySelectorAll('input').forEach(inp => {
                 inp.addEventListener('change', (e) => {
                     let col = e.target.getAttribute('data-col');
                     let type = e.target.getAttribute('data-type');
                     let val = parseFloat(e.target.value);
-                    if(!isNaN(val)) {
-                        AppState.filters[col][type] = val;
-                        runFilters();
-                    }
+                    if(!isNaN(val)) { AppState.filters[col][type] = val; runFilters(); }
                 });
             });
 
             runFilters();
         }
 
-        // Control Bindings
-        DOM.selX.addEventListener('change', e => { AppState.maps.x = e.target.value; runFilters(); });
-        DOM.selY.addEventListener('change', e => { AppState.maps.y = e.target.value; runFilters(); });
-        DOM.selZ.addEventListener('change', e => { AppState.maps.z = e.target.value; runFilters(); });
-        DOM.selSize.addEventListener('change', e => { AppState.maps.size = e.target.value; runFilters(); });
+        // Bind Controls
+        const handleMappingChange = (axis, val) => { AppState.maps[axis] = val; runFilters(); };
+        DOM.selX.addEventListener('change', e => handleMappingChange('x', e.target.value));
+        DOM.selY.addEventListener('change', e => handleMappingChange('y', e.target.value));
+        DOM.selZ.addEventListener('change', e => handleMappingChange('z', e.target.value));
+        DOM.selSize.addEventListener('change', e => handleMappingChange('size', e.target.value));
 
         DOM.axisBtns.forEach(btn => {
             btn.addEventListener('click', e => {
                 const axis = e.target.getAttribute('data-axis');
                 AppState.axes[axis] = !AppState.axes[axis];
                 e.target.classList.toggle('active', AppState.axes[axis]);
-                document.getElementById(`wrap-${axis}`).style.display = AppState.axes[axis] ? 'block' : 'none';
+                document.getElementById(`wrap-${axis}`).style.opacity = AppState.axes[axis] ? '1' : '0.4';
                 runFilters();
             });
         });
 
-        DOM.toggleMissing.addEventListener('change', e => { AppState.showMissing = e.target.checked; runFilters(); });
+        DOM.toggleMissing.addEventListener('change', e => { AppState.fadeMissing = e.target.checked; runFilters(); });
         DOM.searchInput.addEventListener('input', e => { AppState.search = e.target.value.toLowerCase(); runFilters(); });
 
+        // --- STREAMING_CHUNK:Filtering and Rendering Plotly ---
         function isMissing(val) { return val === null || val === undefined || val === ''; }
 
         function runFilters() {
             if (!AppState.cleaned.length) return;
 
-            AppState.filtered = AppState.cleaned.filter(row => {
-                // Search Text
+            let activeAxes = ['x', 'y', 'z'].filter(a => AppState.axes[a] && AppState.maps[a] !== '');
+
+            AppState.filtered = AppState.cleaned.map(row => {
+                let keep = true;
+                let isFaded = false;
+
+                // Search
                 if (AppState.search) {
                     let rowStr = Object.values(row).join(' ').toLowerCase();
-                    if (!rowStr.includes(AppState.search)) return false;
-                }
-                
-                // Missing Data filter (only check active mapped axes)
-                if (!AppState.showMissing) {
-                    let axesToChecks = ['x', 'y', 'z'].filter(a => AppState.axes[a]);
-                    for(let a of axesToChecks) {
-                        if (isMissing(row[AppState.maps[a]])) return false;
-                    }
+                    if (!rowStr.includes(AppState.search)) keep = false;
                 }
 
-                // Numeric Ranges
+                // Range Filters
                 for(let col in AppState.filters) {
                     let val = row[col];
-                    if (!isMissing(val) && (val < AppState.filters[col].min || val > AppState.filters[col].max)) {
-                        return false;
+                    if (!isMissing(val) && (val < AppState.filters[col].min || val > AppState.filters[col].max)) keep = false;
+                }
+
+                // Missing Data Logic on mapped axes
+                for(let a of activeAxes) {
+                    if (isMissing(row[AppState.maps[a]])) {
+                        if (!AppState.fadeMissing) keep = false; // Remove entirely
+                        else isFaded = true; // Keep but fade
                     }
                 }
-                return true;
-            });
 
-            renderPlot();
-            if (document.getElementById('view-hist').classList.contains('active')) renderHistogram();
+                return { ...row, _render: keep, _faded: isFaded };
+            }).filter(r => r._render);
+
+            renderPlot(activeAxes);
         }
 
-        // --- STREAMING_CHUNK:Rendering Dynamic Plotly Visualization ---
-        function renderPlot() {
+        function renderPlot(activeAxes) {
             if(!AppState.filtered.length) { Plotly.purge(DOM.plotDiv); return; }
 
-            let d = AppState.filtered;
-            let activeCount = ['x', 'y', 'z'].filter(a => AppState.axes[a]).length;
+            let xMap = AppState.maps.x, yMap = AppState.maps.y, zMap = AppState.maps.z;
+            let activeCount = activeAxes.length;
             
-            // Build Hover Text dynamically containing ALL columns up to reasonable limit
             const buildText = (row) => {
                 let parts = [];
-                let countryField = AppState.columns.find(c => c.toLowerCase().includes('country'));
-                if (countryField && row[countryField]) parts.push(`<b>${row[countryField]}</b>`);
+                let nameCol = AppState.columns.find(c => c.toLowerCase().includes('country') || c.toLowerCase().includes('name'));
+                if (nameCol && row[nameCol]) parts.push(`<b style="font-size:14px;">${row[nameCol]}</b><br>`);
                 
                 AppState.columns.forEach(col => {
-                    if (col !== countryField && !isMissing(row[col])) {
+                    if (col !== nameCol && !isMissing(row[col])) {
                         let v = row[col];
                         if (typeof v === 'number' && !Number.isInteger(v)) v = v.toFixed(2);
                         else if (typeof v === 'string' && v.length > 50) v = v.substring(0,47)+'...';
                         parts.push(`<i>${col}</i>: ${v}`);
                     }
                 });
-                return parts.join('<br>') + '<extra></extra>';
+                return parts.join('<br>') + '<extra></extra>'; // extra removes trace info block
             };
 
-            let xArr=[], yArr=[], zArr=[], txtArr=[], cData=[];
-            let zTicks = null;
-
-            d.forEach(row => {
+            let xArr=[], yArr=[], zArr=[], txtArr=[], cData=[], opacityArr=[];
+            
+            AppState.filtered.forEach(row => {
                 txtArr.push(buildText(row));
                 cData.push(row);
+                opacityArr.push(row._faded ? 0.15 : 0.9);
                 
-                // Helper to get val
-                const getV = (axisKey) => {
-                    let col = AppState.maps[axisKey];
-                    return isMissing(row[col]) ? (AppState.colMeta[col].type === 'numeric' ? 0 : 'Unknown') : row[col];
-                };
+                const getV = (key) => isMissing(row[key]) ? (AppState.colMeta[key]?.type === 'numeric' ? 0 : 'Unknown') : row[key];
 
                 if (activeCount === 3) {
-                    xArr.push(getV('x')); yArr.push(getV('y'));
-                    // Map Z to numeric indices if string for better 3D color/axis handling
-                    if (AppState.colMeta[AppState.maps.z].type === 'string') {
-                        let uniq = AppState.colMeta[AppState.maps.z].unique;
-                        zArr.push(uniq.indexOf(getV('z')));
-                    } else {
-                        zArr.push(getV('z'));
-                    }
+                    xArr.push(getV(xMap)); yArr.push(getV(yMap));
+                    // 3D scatter requires Z to be categorical if it's text, Plotly handles string arrays gracefully.
+                    zArr.push(getV(zMap));
                 } else if (activeCount === 2) {
-                    let activeKeys = ['x', 'y', 'z'].filter(a => AppState.axes[a]);
-                    xArr.push(getV(activeKeys[0])); yArr.push(getV(activeKeys[1]));
+                    let keys = activeAxes.map(a => AppState.maps[a]);
+                    xArr.push(getV(keys[0])); yArr.push(getV(keys[1]));
                 } else if (activeCount === 1) {
-                    let activeKey = ['x', 'y', 'z'].find(a => AppState.axes[a]);
-                    xArr.push(getV(activeKey)); yArr.push(Math.random()); // Jitter
+                    let key = AppState.maps[activeAxes[0]];
+                    xArr.push(getV(key)); yArr.push(Math.random()); // Jitter for 1D
                 }
             });
 
             // Size Array
-            let sizeArr = activeCount === 3 ? 5 : 10;
-            let sizeMode = 'diameter';
+            let sizeArr = 8; let sizeMode = 'diameter';
             if (AppState.maps.size) {
                 let meta = AppState.colMeta[AppState.maps.size];
-                sizeArr = d.map(r => {
+                sizeArr = AppState.filtered.map(r => {
                     let v = r[AppState.maps.size];
                     if (isMissing(v)) return 5;
                     let ratio = meta.max === meta.min ? 0.5 : (v - meta.min) / (meta.max - meta.min);
-                    return activeCount === 3 ? 4 + ratio * 25 : 8 + ratio * 40;
+                    return activeCount === 3 ? 5 + ratio * 30 : 10 + ratio * 50; // larger in 2D
                 });
                 sizeMode = 'area';
             }
@@ -587,164 +600,130 @@
                 text: txtArr, hovertemplate: '%{text}', customdata: cData,
                 marker: {
                     size: sizeArr, sizemode: sizeMode,
-                    color: activeCount === 3 ? zArr : 'rgba(10, 132, 255, 0.7)',
-                    colorscale: activeCount === 3 ? 'Viridis' : null,
-                    opacity: 0.8,
-                    line: { color: 'rgba(255,255,255,0.2)', width: activeCount === 3 ? 0 : 1 }
+                    color: activeCount === 3 ? zArr : 'rgba(10, 132, 255, 0.8)',
+                    opacity: opacityArr,
+                    line: { color: 'rgba(255,255,255,0.3)', width: activeCount === 3 ? 0 : 1 }
                 }
             };
 
+            let axStyle = { gridcolor: 'rgba(255,255,255,0.08)', zerolinecolor: 'rgba(255,255,255,0.15)', titlefont: { color: '#f5f5f7' }, tickfont: { color: '#86868b' } };
             let layout = {
                 paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-                font: { family: 'var(--font-stack)', color: '#86868b' },
-                margin: activeCount === 3 ? {l:0, r:0, t:0, b:0} : { l: 40, r: 20, t: 40, b: 40 },
-                hoverlabel: { bgcolor: 'rgba(28,28,30,0.9)', font: {color: '#fff'}, bordercolor: 'rgba(255,255,255,0.2)' },
+                font: { family: 'var(--font-stack)' },
+                margin: activeCount === 3 ? {l:0, r:0, t:0, b:0} : { l: 50, r: 30, t: 30, b: 50 },
+                hoverlabel: { bgcolor: 'rgba(28,28,30,0.95)', font: {color: '#f5f5f7'}, bordercolor: 'var(--panel-border)', align: 'left' },
             };
-
-            let axStyle = { gridcolor: 'rgba(255,255,255,0.1)', zerolinecolor: 'rgba(255,255,255,0.2)', titlefont: { color: '#f5f5f7' } };
 
             if (activeCount === 3) {
                 layout.scene = {
                     bgcolor: 'transparent',
-                    xaxis: { ...axStyle, title: AppState.maps.x, backgroundcolor: 'transparent', showbackground: false },
-                    yaxis: { ...axStyle, title: AppState.maps.y, backgroundcolor: 'transparent', showbackground: false },
-                    zaxis: { ...axStyle, title: AppState.maps.z, backgroundcolor: 'transparent', showbackground: false },
+                    xaxis: { ...axStyle, title: xMap, backgroundcolor: 'transparent', showbackground: false },
+                    yaxis: { ...axStyle, title: yMap, backgroundcolor: 'transparent', showbackground: false },
+                    zaxis: { ...axStyle, title: zMap, backgroundcolor: 'transparent', showbackground: false }
                 };
-                if (AppState.colMeta[AppState.maps.z].type === 'string') {
-                    let uniq = AppState.colMeta[AppState.maps.z].unique;
-                    layout.scene.zaxis.tickvals = uniq.map((_, i) => i);
-                    layout.scene.zaxis.ticktext = uniq.map(u => u.length > 20 ? u.substring(0,17)+'...' : u);
-                }
             } else if (activeCount === 2) {
-                let keys = ['x', 'y', 'z'].filter(a => AppState.axes[a]);
-                layout.xaxis = { ...axStyle, title: AppState.maps[keys[0]] };
-                layout.yaxis = { ...axStyle, title: AppState.maps[keys[1]] };
+                let keys = activeAxes.map(a => AppState.maps[a]);
+                layout.xaxis = { ...axStyle, title: keys[0] };
+                layout.yaxis = { ...axStyle, title: keys[1] };
             } else if (activeCount === 1) {
-                let key = ['x', 'y', 'z'].find(a => AppState.axes[a]);
-                layout.xaxis = { ...axStyle, title: AppState.maps[key] };
+                let key = AppState.maps[activeAxes[0]];
+                layout.xaxis = { ...axStyle, title: key };
                 layout.yaxis = { visible: false, range: [-0.5, 1.5] };
             }
 
             Plotly.react(DOM.plotDiv, [trace], layout, { responsive: true, displayModeBar: false });
             
-            // Rebind Click Event
-            DOM.plotDiv.removeAllListeners('plotly_click');
-            DOM.plotDiv.on('plotly_click', data => {
-                if(data.points.length > 0) inspectRow(data.points[0].customdata);
-            });
-        }
-
-        function renderHistogram() {
-            if(!AppState.filtered.length) return;
-            // Use currently mapped X for histogram, fallback to first numeric
-            let col = AppState.maps.x;
-            if(!AppState.axes.x || AppState.colMeta[col].type !== 'numeric') {
-                col = AppState.columns.find(c => AppState.colMeta[c].type === 'numeric') || col;
-            }
-
-            let vals = AppState.filtered.map(r => r[col]).filter(v => !isMissing(v));
+            // Rebind Interaction Events
+            DOM.plotDiv.removeAllListeners('plotly_hover');
+            DOM.plotDiv.on('plotly_hover', data => { if(data.points.length) inspectRow(data.points[0].customdata); });
             
-            let trace = {
-                x: vals, type: 'histogram',
-                marker: { color: 'rgba(191, 90, 242, 0.7)', line: { color: 'rgba(255,255,255,0.2)', width: 1 } }
-            };
-            let layout = {
-                paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-                font: { family: 'var(--font-stack)', color: '#86868b' },
-                xaxis: { gridcolor: 'rgba(255,255,255,0.1)', title: col, titlefont: { color: '#fff' } },
-                yaxis: { gridcolor: 'rgba(255,255,255,0.1)', title: 'Frequency', titlefont: { color: '#fff' } },
-                margin: { l: 40, r: 20, t: 40, b: 40 }
-            };
-            Plotly.react(DOM.histDiv, [trace], layout, { responsive: true, displayModeBar: false });
+            DOM.plotDiv.removeAllListeners('plotly_click');
+            DOM.plotDiv.on('plotly_click', data => { if(data.points.length) addToCompare(data.points[0].customdata); });
         }
 
-        // --- STREAMING_CHUNK:Inspector and Comparison Logic ---
+        // --- STREAMING_CHUNK:Inspector and Comparison Interactions ---
+        DOM.tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const targetId = e.target.getAttribute('data-target');
+                const siblings = Array.from(e.target.parentElement.children);
+                siblings.forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                const contentSiblings = Array.from(document.getElementById(targetId).parentElement.children).filter(c => c.classList.contains('tab-content'));
+                contentSiblings.forEach(c => c.classList.remove('active'));
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+
         function getEntityName(row) {
             let nCol = AppState.columns.find(c => c.toLowerCase().includes('country') || c.toLowerCase().includes('name'));
-            return nCol && row[nCol] ? row[nCol] : `Entity #${row._id}`;
+            return nCol && row[nCol] ? row[nCol] : `Row #${row._id}`;
         }
 
         function inspectRow(row) {
             AppState.inspectedRow = row;
-            // Switch to inspector tab
-            document.querySelector('.tab[data-target="view-inspect"]').click();
-
-            let html = `<h2 style="color:#fff; margin-bottom:16px;">${getEntityName(row)}</h2>`;
+            let html = `<h2 style="color:#fff; margin-bottom:20px; font-size:18px;">${getEntityName(row)}</h2>`;
             AppState.columns.forEach(col => {
-                let val = isMissing(row[col]) ? '<span style="opacity:0.3">-</span>' : row[col];
+                let val = isMissing(row[col]) ? '<span style="opacity:0.3">No Data</span>' : row[col];
                 html += `<div class="detail-item"><div class="lbl">${col}</div><div class="val">${val}</div></div>`;
             });
-
             DOM.inspectContent.innerHTML = html;
             DOM.inspectContent.style.marginTop = '0';
             DOM.inspectContent.style.textAlign = 'left';
             
-            // Setup add button
             DOM.btnAddCompare.style.display = 'block';
             let inCompare = AppState.compareList.some(r => r._id === row._id);
             DOM.btnAddCompare.textContent = inCompare ? "Remove from Comparison" : "Add to Comparison";
             DOM.btnAddCompare.style.background = inCompare ? "rgba(255,255,255,0.1)" : "var(--accent-blue)";
         }
 
-        DOM.btnAddCompare.addEventListener('click', () => {
-            let row = AppState.inspectedRow;
+        function addToCompare(row) {
             if(!row) return;
             let idx = AppState.compareList.findIndex(r => r._id === row._id);
-            
             if(idx > -1) AppState.compareList.splice(idx, 1);
             else AppState.compareList.push(row);
             
-            inspectRow(row); // refresh button state
+            if (AppState.inspectedRow && AppState.inspectedRow._id === row._id) inspectRow(row); // Update button state
             updateCompareUI();
-        });
+            
+            // Switch to compare tab automatically to show action
+            document.querySelector('.tab[data-target="view-compare"]').click();
+        }
 
-        DOM.btnClearCompare.addEventListener('click', () => {
-            AppState.compareList = [];
-            updateCompareUI();
-        });
+        DOM.btnAddCompare.addEventListener('click', () => addToCompare(AppState.inspectedRow));
+        DOM.btnClearCompare.addEventListener('click', () => { AppState.compareList = []; updateCompareUI(); });
 
         function updateCompareUI() {
             let count = AppState.compareList.length;
             DOM.tabCompare.textContent = `Compare (${count})`;
             
             if(count === 0) {
-                DOM.compareContent.innerHTML = `<div style="color:var(--text-secondary); text-align:center; margin-top:50px;">No items selected for comparison.</div>`;
-                DOM.compareContent.style.marginTop = '0';
+                DOM.compareContent.innerHTML = `<div style="color:var(--text-secondary); text-align:center; margin-top:60px;">No items selected for comparison.</div>`;
                 DOM.btnClearCompare.style.display = 'none';
                 return;
             }
 
             DOM.btnClearCompare.style.display = 'block';
-            
-            // We want country name as headers
-            let html = `<div class="compare-table-wrap"><table><thead><tr><th>Attribute</th>`;
+            let html = `<div class="compare-table-wrap"><table><thead><tr><th>Property</th>`;
             AppState.compareList.forEach(r => { html += `<th>${getEntityName(r)}</th>`; });
             html += `</tr></thead><tbody>`;
 
-            // Prioritize mapped axes first, then top 10 columns
             let keysToShow = new Set(['x','y','z','size'].map(a => AppState.maps[a]).filter(Boolean));
-            AppState.columns.slice(0, 15).forEach(c => keysToShow.add(c));
+            AppState.columns.slice(0, 10).forEach(c => keysToShow.add(c));
             
             Array.from(keysToShow).forEach(col => {
                 html += `<tr><td>${col}</td>`;
-                AppState.compareList.forEach(r => {
-                    let val = isMissing(r[col]) ? '-' : r[col];
-                    html += `<td>${val}</td>`;
-                });
+                AppState.compareList.forEach(r => { html += `<td>${isMissing(r[col]) ? '-' : r[col]}</td>`; });
                 html += `</tr>`;
             });
 
             html += `</tbody></table></div>`;
             DOM.compareContent.innerHTML = html;
             DOM.compareContent.style.marginTop = '0';
-            DOM.compareContent.style.textAlign = 'left';
         }
 
         window.addEventListener('resize', () => {
-            if (AppState.cleaned.length) {
-                if(document.getElementById('view-plot').classList.contains('active')) Plotly.Plots.resize(DOM.plotDiv);
-                if(document.getElementById('view-hist').classList.contains('active')) Plotly.Plots.resize(DOM.histDiv);
-            }
+            if (AppState.cleaned.length) Plotly.Plots.resize(DOM.plotDiv);
         });
     </script>
 </body>
