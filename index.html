@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demographic 3D Explorer</title>
+    
+    <!-- Load PapaParse for robust CSV parsing -->
+    <script src="https://unpkg.com/papaparse@latest/papaparse.min.js"></script>
+    <!-- Load Plotly for high-performance 3D visualization -->
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #000000;
+            --panel-bg: rgba(44, 44, 46, 0.7);
+            --panel-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #ebebf599;
+            --accent-green: #30d158;
+            --toggle-bg: #39393d;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            overflow: hidden; /* Prevent scrolling, Plotly handles 3D interaction */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        #header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--panel-border);
+            z-index: 10;
+        }
+
+        .title-group h1 {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .title-group p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .controls-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--toggle-bg);
+            transition: .3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            border-radius: 26px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-green);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        #plot-container {
+            width: 100vw;
+            height: 100vh;
+            padding-top: 64px; /* Offset for header */
+        }
+
+        #loading-overlay {
+            position: absolute;
+            top: 64px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 5;
+            transition: opacity 0.5s ease;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--panel-border);
+            border-top: 4px solid var(--text-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <div class="title-group">
+            <h1>Demographic 3D Explorer</h1>
+            <p>X: Literacy • Y: Salary • Z: Language • Size: Population</p>
+        </div>
+        <div class="controls-group">
+            <span>Show Missing Data</span>
+            <label class="switch">
+                <input type="checkbox" id="missingDataToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p id="loading-text">Loading Data...</p>
+    </div>
+
+    <div id="plot-container"></div>
+
+    <script>
+        let parsedData = [];
+        let uniqueLanguages = [];
+        
+        // Element references
+        const toggleBtn = document.getElementById('missingDataToggle');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+
+        window.onload = () => {
+            fetchDataAndRender();
+            
+            // Re-render chart when toggle is switched
+            toggleBtn.addEventListener('change', () => {
+                render3DPlot();
+            });
+        };
+
+        function getPrimaryLanguage(langString) {
+            if (!langString || typeof langString !== 'string') return 'Unknown';
+            
+            // Get the first language before semicolon
+            let primary = langString.split(';')[0];
+            
+            // Remove percentage signs, numbers, and extra spaces
+            primary = primary.replace(/[0-9.%]/g, '').trim();
+            
+            // Extract the very first word to ensure clean axis mapping
+            // e.g., "Afghan Persian or Dari" -> "Afghan"
+            let firstWord = primary.split(' ')[0];
+            
+            return firstWord || 'Unknown';
+        }
+
+        function fetchDataAndRender() {
+            fetch('countries_demographics_enriched.csv')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(csvText => {
+                    Papa.parse(csvText, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            processData(results.data);
+                        },
+                        error: function(err) {
+                            showError("Error parsing CSV: " + err.message);
+                        }
+                    });
+                })
+                .catch(err => {
+                    showError("Failed to load CSV file. Make sure 'countries_demographics_enriched.csv' is in the same directory.<br><br>" + err.message);
+                });
+        }
+
+        function processData(data) {
+            let languagesSet = new Set();
+
+            parsedData = data.map(row => {
+                // Parse numerical values safely
+                let literacy = parseFloat(row.literacy_rate);
+                let salary = parseFloat(row.average_monthly_salary);
+                let population = parseFloat(row.population) || 0;
+                
+                // Determine if vital data is missing
+                let isMissing = isNaN(literacy) || isNaN(salary);
+
+                // Clean Language
+                let langRaw = row.official_languages_top3_with_pct;
+                let language = getPrimaryLanguage(langRaw);
+                languagesSet.add(language);
+
+                return {
+                    country: row.country_name || 'Unknown',
+                    literacy: isNaN(literacy) ? 0 : literacy,
+                    salary: isNaN(salary) ? 0 : salary,
+                    population: population,
+                    language: language,
+                    isMissing: isMissing,
+                    // Keep original values for hover texts
+                    rawLiteracy: row.literacy_rate ? `${parseFloat(row.literacy_rate).toFixed(1)}%` : 'N/A',
+                    rawSalary: row.average_monthly_salary ? `$${parseFloat(row.average_monthly_salary).toFixed(2)}` : 'N/A'
+                };
+            });
+
+            // Sort unique languages for consistent Z-axis mapping
+            uniqueLanguages = Array.from(languagesSet).sort();
+
+            // Hide loading overlay and draw plot
+            loadingOverlay.style.opacity = '0';
+            setTimeout(() => { loadingOverlay.style.display = 'none'; }, 500);
+            
+            render3DPlot();
+        }
+
+        function render3DPlot() {
+            const showMissing = toggleBtn.checked;
+            
+            // Split data into valid and missing sets for distinct styling
+            const validData = parsedData.filter(d => !d.isMissing);
+            const missingData = parsedData.filter(d => d.isMissing);
+
+            // Function to generate trace objects
+            const createTrace = (dataset, isMissingSet) => {
+                // Scale populations for spherical volumes mapping (cube root)
+                const maxPop = Math.max(...parsedData.map(d => d.population), 1);
+                const sizes = dataset.map(d => {
+                    let scaled = (Math.pow(d.population, 1/3) / Math.pow(maxPop, 1/3)) * 40;
+                    return Math.max(scaled, 4); // Minimum size of 4
+                });
+
+                const hoverTexts = dataset.map(d => 
+                    `<b>${d.country}</b><br>` +
+                    `Primary Language: ${d.language}<br>` +
+                    `Literacy Rate: ${d.rawLiteracy}<br>` +
+                    `Avg Monthly Salary: ${d.rawSalary}<br>` +
+                    `Population: ${d.population.toLocaleString()}`
+                );
+
+                return {
+                    x: dataset.map(d => d.literacy),
+                    y: dataset.map(d => d.salary),
+                    z: dataset.map(d => uniqueLanguages.indexOf(d.language)),
+                    mode: 'markers',
+                    type: 'scatter3d',
+                    name: isMissingSet ? 'Missing Data (Nulls as 0)' : 'Valid Data',
+                    text: hoverTexts,
+                    hoverinfo: 'text',
+                    marker: {
+                        size: sizes,
+                        // Valid data gets a vibrant colorscale based on language index
+                        // Missing data gets a dull grey
+                        color: isMissingSet ? '#555555' : dataset.map(d => uniqueLanguages.indexOf(d.language)),
+                        colorscale: isMissingSet ? null : 'Portland',
+                        opacity: isMissingSet ? 0.3 : 0.9,
+                        line: {
+                            color: isMissingSet ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.5)',
+                            width: 1
+                        }
+                    }
+                };
+            };
+
+            const traces = [createTrace(validData, false)];
+            
+            if (showMissing && missingData.length > 0) {
+                traces.push(createTrace(missingData, true));
+            }
+
+            const layout = {
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                margin: { l: 0, r: 0, b: 0, t: 0 },
+                showlegend: false,
+                scene: {
+                    bgcolor: '#000000',
+                    xaxis: {
+                        title: { text: 'Literacy Rate (%)', font: { color: '#ebebf599', size: 14 } },
+                        gridcolor: '#333333',
+                        zerolinecolor: '#555555',
+                        tickfont: { color: '#ffffff' },
+                        backgroundcolor: '#000000',
+                        showbackground: true
+                    },
+                    yaxis: {
+                        title: { text: 'Avg Monthly Salary ($)', font: { color: '#ebebf599', size: 14 } },
+                        gridcolor: '#333333',
+                        zerolinecolor: '#555555',
+                        tickfont: { color: '#ffffff' },
+                        backgroundcolor: '#000000',
+                        showbackground: true
+                    },
+                    zaxis: {
+                        title: { text: 'Primary Language', font: { color: '#ebebf599', size: 14 } },
+                        tickvals: uniqueLanguages.map((_, i) => i),
+                        ticktext: uniqueLanguages,
+                        gridcolor: '#333333',
+                        zerolinecolor: '#555555',
+                        tickfont: { color: '#ffffff', size: 10 },
+                        backgroundcolor: '#000000',
+                        showbackground: true
+                    },
+                    camera: {
+                        eye: { x: 1.5, y: 1.5, z: 1.2 }
+                    }
+                },
+                hoverlabel: {
+                    bgcolor: 'rgba(44, 44, 46, 0.9)',
+                    font: { family: '-apple-system, sans-serif', color: '#ffffff' },
+                    bordercolor: 'rgba(255,255,255,0.2)'
+                }
+            };
+
+            const config = {
+                responsive: true,
+                displayModeBar: false
+            };
+
+            Plotly.newPlot('plot-container', traces, layout, config);
+        }
+
+        function showError(message) {
+            loadingOverlay.innerHTML = `
+                <div style="background: rgba(255, 59, 48, 0.1); border: 1px solid #ff3b30; padding: 20px; border-radius: 12px; max-width: 400px; text-align: center;">
+                    <h3 style="color: #ff3b30; margin-bottom: 10px;">Error</h3>
+                    <p style="color: var(--text-secondary); font-size: 14px;">${message}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
